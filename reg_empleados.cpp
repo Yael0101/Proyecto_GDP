@@ -34,6 +34,28 @@ MYSQL* conectar() {
     return conn;
 }
 
+// Función para validar credenciales de inicio de sesión
+bool validarCredenciales(MYSQL* conn, const string& usuario, const string& contrasena) {
+    if (!conn) {
+        cerr << "No hay conexión con la base de datos.\n";
+        return false;
+    }
+
+    // Construcción de la consulta SQL segura
+    string query = "SELECT * FROM usuarios WHERE username = '" + usuario + "' AND password = '" + contrasena + "' LIMIT 1";
+
+    if (mysql_query(conn, query.c_str()) != 0) {
+        cerr << "Error al ejecutar consulta: " << mysql_error(conn) << endl;
+        return false;
+    }
+
+    MYSQL_RES* resultado = mysql_store_result(conn);
+    bool autenticado = (mysql_num_rows(resultado) > 0); // Si hay una fila, las credenciales son correctas
+    mysql_free_result(resultado); // Liberar memoria
+
+    return autenticado;
+}
+
 // Función para registrar un empleado en la base de datos
 void registrarEmpleado(MYSQL* conn) {
     if (!conn) {
@@ -90,6 +112,30 @@ void registrarEmpleado(MYSQL* conn) {
     } else {
         cerr << "Error al registrar empleado: " << mysql_error(conn) << endl;
     }
+}
+// Función para el inicio de sesión
+bool iniciarSesion(MYSQL* conn) {
+    string usuario, contrasena;
+    int intentos = 3;
+
+    while (intentos > 0) {
+        cout << "\n--- Inicio de Sesión ---\n";
+        cout << "Usuario: ";
+        getline(cin, usuario);
+        cout << "Contraseña: ";
+        getline(cin, contrasena);
+
+        if (validarCredenciales(conn, usuario, contrasena)) {
+            cout << "Bienvenido, " << usuario << "!\n";
+            return true;
+        }
+        else {
+            cout << "Datos incorrectos. Intentos restantes: " << --intentos << endl;
+        }
+    }
+
+    cerr << "Demasiados intentos fallidos. Cerrando programa.\n";
+    return false;
 }
 
 // MENÚ PRINCIPAL - BÁSICO
