@@ -33,6 +33,33 @@ MYSQL* conectar() {
     }
     return conn;
 }
+bool iniciarSesion(MYSQL* conn) {
+    string usuario;
+    int id;
+
+    cout << "\n--- Inicio de Sesión ---\n";
+    cout << "Nombre del empleado: "; getline(cin, usuario);
+    cout << "Contraseña (ID): "; cin >> id;
+    cin.ignore();
+
+    string query = "SELECT * FROM empleados WHERE nombreCompleto='" + usuario + "' AND id=" + to_string(id) + ";";
+
+    if (mysql_query(conn, query.c_str()) == 0) {
+        MYSQL_RES* res = mysql_store_result(conn);
+        if (res && mysql_num_rows(res) > 0) {
+            cout << "Inicio de sesión exitoso." << endl;
+            mysql_free_result(res);
+            return true;
+        }
+        else {
+            cout << "Credenciales incorrectas." << endl;
+        }
+    }
+    else {
+        cerr << "Error al ejecutar la consulta: " << mysql_error(conn) << endl;
+    }
+    return false;
+}
 
 // Función para registrar un empleado en la base de datos
 void registrarEmpleado(MYSQL* conn) {
